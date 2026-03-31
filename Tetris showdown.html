@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tetris Showdown</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            background: #1a1a22;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* --- ESTILOS DEL MENÚ --- */
+        #menu-container {
+            background: #2a2a35;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            z-index: 10;
+        }
+        #menu-container h1 { margin-top: 0; color: #0DFF72; font-size: 32px; text-transform: uppercase; font-style: italic;}
+        input {
+            width: 100%; padding: 10px; margin: 10px 0;
+            border-radius: 5px; border: 1px solid #555;
+            background: #111; color: #fff; box-sizing: border-box; font-size: 16px;
+        }
+        button.action-btn {
+            width: 100%; padding: 12px; margin: 5px 0; font-size: 16px;
+            background: #3877FF; color: white; border: none; border-radius: 5px;
+            cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        button.action-btn:hover { background: #5088ff; }
+        button.action-btn:active { background: #2a5ac2; }
+        .host-info { margin-top: 15px; color: #FF8E0D; font-weight: bold; white-space: pre-wrap; word-wrap: break-word;}
+        
+        #host-waiting-msg { color: #FF0D72; margin-top: 15px; font-weight: bold; font-size: 14px; display: none; }
+
+        /* --- PANTALLA DE JUEGO --- */
+        #game-wrapper {
+            display: none;
+            width: 100%; height: 100vh;
+            flex-direction: row; padding: 20px;
+            box-sizing: border-box; gap: 20px;
+        }
+
+        #local-player-section {
+            display: flex; flex-direction: column; align-items: center; flex: 0 0 auto;
+        }
+        
+        #game-info {
+            text-align: center; margin-bottom: 10px; font-size: 20px;
+            color: #FFE138; font-weight: bold; background: rgba(0,0,0,0.5);
+            padding: 8px 15px; border-radius: 5px; text-transform: uppercase;
+            border: 1px solid #FFE138;
+        }
+
+        #canvas-container { position: relative; }
+        #tetris {
+            border: 4px solid #fff; background-color: #000;
+            height: 70vh; max-height: 600px;
+        }
+
+        .controls {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; margin-top: 15px; width: 100%; max-width: 300px;
+        }
+        .controls button {
+            padding: 15px; font-size: 18px; background: #333; color: white;
+            border: 2px solid #555; border-radius: 8px; touch-action: manipulation;
+        }
+        .controls button:active { background: #555; }
+        .rotate { grid-column: 2; }
+
+        /* --- OPONENTES --- */
+        #opponents-section {
+            flex: 1 1 auto; background: rgba(255,255,255,0.05);
+            border-radius: 10px; padding: 15px; display: flex;
+            flex-direction: column; overflow: hidden; border: 1px solid #444;
+        }
+        #opponents-section h3 { margin-top: 0; text-align: center; color: #0DFF72; border-bottom: 1px solid #444; padding-bottom: 10px;}
+        
+        #opponents-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px; overflow-y: auto; padding-right: 5px;
+        }
+
+        .opponent-container {
+            background: #2a2a35; border-radius: 8px; padding: 5px;
+            text-align: center; border: 2px solid #444; position: relative;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .opponent-name { font-size: 12px; font-weight: bold; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .opponent-score { font-size: 11px; color: #FFE138; margin-bottom: 3px;}
+        .opponent-canvas { background: #000; border: 1px solid #999; width: 80px; height: 133px; }
+
+        .opponent-container.dead { border-color: #FF0D72; opacity: 0.5; }
+        .opponent-container.dead .opponent-name { color: #FF0D72; }
+        .death-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 13, 114, 0.4); color: white; font-size: 40px;
+            align-items: center; justify-content: center; border-radius: 8px;
+        }
+        .opponent-container.dead .death-overlay { display: flex; }
+
+        /* --- PANTALLA DE VICTORIA --- */
+        #winner-screen {
+            display: none; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); background: rgba(0,0,0,0.95);
+            padding: 40px; border-radius: 15px; border: 3px solid #0DFF72;
+            text-align: center; z-index: 100; box-shadow: 0 0 40px rgba(13,255,114,0.4);
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="menu-container">
+        <h1>Tetris Showdown</h1>
+        <p style="color: #aaa; font-size: 14px; margin-top: -10px;">¡Sobrevive para ganar! (2 a 100 Jugadores)</p>
+        <input type="text" id="username" placeholder="Tu Nombre de Usuario" maxlength="12">
+        
+        <hr style="border-color: #555;">
+        
+        <h3>Crear Sala (Host)</h3>
+        <button class="action-btn" style="background:#0DFF72; color:#000;" onclick="hostRoom()">Crear Nueva Partida</button>
+        <div id="room-id-display" class="host-info"></div>
+        
+        <div id="host-waiting-msg">Esperando jugadores... (1/100)</div>
+        <button class="action-btn" id="start-game-btn" style="display:none; background:#FFE138; color:#000; margin-top:15px;" onclick="startGameHost()">▶ ¡Iniciar Ronda!</button>
+
+        <hr style="border-color: #555; margin-top: 20px;">
+        
+        <h3>Unirse a Sala</h3>
+        <input type="text" id="join-id" placeholder="ID de la sala">
+        <button class="action-btn" style="background:#F538FF;" onclick="joinRoom()">Conectarse a Partida</button>
+        <div id="join-status" class="host-info"></div>
+    </div>
+
+    <div id="game-wrapper">
+        <div id="local-player-section">
+            <div id="game-info">Modo Showdown</div>
+            <div id="canvas-container">
+                <canvas id="tetris" width="240" height="400"></canvas>
+            </div>
+            <div class="controls">
+                <button onclick="playerRotate(-1)">↺</button>
+                <button class="rotate" onclick="playerRotate(1)">↻</button>
+                <span></span>
+                <button onclick="playerMove(-1)">←</button>
+                <button onclick="playerDrop()">↓</button>
+                <button onclick="playerMove(1)">→</button>
+            </div>
+        </div>
+        
+        <div id="opponents-section">
+            <h3>SUPERVIVIENTES (<span id="player-count">1</span>)</h3>
+            <div id="opponents-grid"></div>
+        </div>
+    </div>
+
+    <div id="winner-screen">
+        <h1 id="winner-text" style="color: #0DFF72; margin-top:0;">¡Ronda Terminada!</h1>
+        <p id="winner-subtext" style="font-size: 18px; color: #fff; margin-bottom: 25px;"></p>
+        
+        <div id="host-controls" style="display:none;">
+            <div id="host-end-waiting-msg" style="color: #FF8E0D; margin-bottom: 10px; display: none;">No hay suficientes jugadores para otra ronda.</div>
+            <button class="action-btn" id="play-again-btn" style="background: #0DC2FF;" onclick="playAgainHost()">Seguir Jugando (Nueva Ronda)</button>
+        </div>
+        
+        <div id="client-waiting" style="display:none; color: #0DC2FF; margin-bottom: 15px; font-weight: bold;">
+            Esperando a que el Host inicie la siguiente ronda...
+        </div>
+        
+        <button class="action-btn" style="background: #FF0D72; margin-top: 10px;" onclick="location.reload()">Salir al Menú</button>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN AUDIO LOCAL ---
+        const bgMusic = new Audio('Tetris 99 - Main Theme.mp3');
+        bgMusic.loop = true;
+        bgMusic.volume = 0.6; // Ajusta el volumen si lo necesitas
+
+        function startMusic() {
+            // El play puede ser bloqueado si no hay interacción del usuario, 
+            // pero como se ejecuta tras hacer click en el botón, funcionará perfecto.
+            bgMusic.play().catch(e => console.log("Audio no pudo iniciar automáticamente", e));
+        }
+
+        function stopMusic() {
+            bgMusic.pause();
+            bgMusic.currentTime = 0; // Reinicia la canción para la próxima ronda
+        }
+
+        // --- VARIABLES GLOBALES ---
+        const ARENA_WIDTH = 12; const ARENA_HEIGHT = 20;
+        let peer = null; let connections = []; 
+        let isHost = false; let hostConnection = null; 
+        
+        let myUsername = ""; let gameActive = false;
+        let playersState = {}; let myPeerId = null;
+
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        context.scale(20, 20);
+        const colors = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
+
+        // --- COMPROBADOR DE JUGADORES (MÍNIMO 2) ---
+        function checkStartRequirements() {
+            if (!isHost) return;
+            const playerCount = Object.keys(playersState).length;
+            
+            // Lógica para el menú principal
+            const startBtn = document.getElementById('start-game-btn');
+            const waitingMsg = document.getElementById('host-waiting-msg');
+            
+            if (playerCount >= 2) {
+                startBtn.style.display = "block";
+                waitingMsg.style.display = "none";
+            } else {
+                startBtn.style.display = "none";
+                waitingMsg.style.display = "block";
+                waitingMsg.innerText = `Esperando jugadores... (${playerCount}/100)`;
+            }
+
+            // Lógica para la pantalla de "Seguir Jugando" si terminó la partida
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const endWaitingMsg = document.getElementById('host-end-waiting-msg');
+            if (playerCount >= 2) {
+                playAgainBtn.style.display = "block";
+                endWaitingMsg.style.display = "none";
+            } else {
+                playAgainBtn.style.display = "none";
+                endWaitingMsg.style.display = "block";
+            }
+        }
+
+        // --- RED Y CONEXIONES (PeerJS) ---
+        function initPeer(callback) {
+            peer = new Peer();
+            peer.on('open', (id) => {
+                myPeerId = id;
+                playersState[id] = { name: myUsername, score: 0, dead: false, arena: createMatrix(ARENA_WIDTH, ARENA_HEIGHT) };
+                callback(id);
+            });
+            peer.on('error', (err) => alert("Error de red: " + err.type));
+        }
+
+        function hostRoom() {
+            myUsername = document.getElementById('username').value || "Host" + Math.floor(Math.random()*100);
+            isHost = true;
+            initPeer((id) => {
+                document.getElementById('room-id-display').innerText = "CÓDIGO DE SALA:\n" + id;
+                checkStartRequirements(); // Comprobar al iniciar
+            });
+
+            peer.on('connection', (conn) => {
+                connections.push(conn);
+                conn.on('data', (data) => handleNetworkData(data, conn.peer));
+                conn.on('close', () => {
+                    if(playersState[conn.peer]) {
+                        delete playersState[conn.peer];
+                        removeOpponentCanvas(conn.peer);
+                        broadcastState();
+                        checkStartRequirements(); // Comprobar si alguien se fue
+                        if(gameActive) checkWinConditions();
+                    }
+                });
+            });
+        }
+
+        function joinRoom() {
+            myUsername = document.getElementById('username').value || "Jugador" + Math.floor(Math.random()*100);
+            const hostId = document.getElementById('join-id').value.trim();
+            if (!hostId) return alert("Ingresa un código de sala");
+            
+            document.getElementById('join-status').innerText = "Conectando al servidor...";
+            initPeer(() => {
+                hostConnection = peer.connect(hostId);
+                hostConnection.on('open', () => {
+                    document.getElementById('join-status').innerText = "¡Conectado! Esperando que el Host inicie...";
+                    hostConnection.send({ type: 'join', name: myUsername, arena: arena });
+                });
+                hostConnection.on('data', (data) => handleNetworkData(data, hostId));
+                hostConnection.on('close', () => { alert("El Host cerró la sala."); location.reload(); });
+            });
+        }
+
+        function handleNetworkData(data, senderId) {
+            if (data.type === 'join') {
+                if (isHost) {
+                    playersState[senderId] = { name: data.name, score: 0, dead: false, arena: data.arena };
+                    broadcastState();
+                    checkStartRequirements(); // Actualizar botones cuando alguien entra
+                }
+            } else if (data.type === 'state_sync') {
+                playersState = data.state;
+                updateOpponentsUI();
+            } else if (data.type === 'start_game') {
+                startGameLocal();
+            } else if (data.type === 'update_player') {
+                if (playersState[senderId]) {
+                    playersState[senderId].score = data.score;
+                    playersState[senderId].dead = data.dead;
+                    if (data.arena) playersState[senderId].arena = data.arena;
+                    
+                    if (isHost) {
+                        broadcastState();
+                        checkWinConditions();
+                    } else {
+                        drawOpponentArena(senderId);
+                    }
+                }
+            } else if (data.type === 'game_over') {
+                showWinner(data.winnerText, data.winnerSubtext);
+            }
+        }
+
+        function broadcastState() {
+            if (!isHost) return;
+            connections.forEach(conn => conn.send({ type: 'state_sync', state: playersState }));
+            updateOpponentsUI();
+        }
+
+        function sendMyUpdate() {
+            if (!peer || !myPeerId) return;
+            const myData = { type: 'update_player', score: player.score, dead: playersState[myPeerId].dead, arena: arena };
+            if (isHost) {
+                playersState[myPeerId].score = player.score;
+                playersState[myPeerId].arena = arena;
+                broadcastState(); checkWinConditions();
+            } else if (hostConnection && hostConnection.open) {
+                hostConnection.send(myData);
+            }
+        }
+
+        // --- CONTROL DE RONDAS ---
+        function startGameHost() {
+            if (Object.keys(playersState).length < 2) return; // Doble verificación de seguridad
+            connections.forEach(conn => conn.send({ type: 'start_game' }));
+            startGameLocal();
+        }
+
+        function playAgainHost() {
+            if (Object.keys(playersState).length < 2) return;
+            document.getElementById('winner-screen').style.display = "none";
+            startGameHost();
+        }
+
+        function startGameLocal() {
+            document.getElementById('menu-container').style.display = "none";
+            document.getElementById('winner-screen').style.display = "none";
+            document.getElementById('game-wrapper').style.display = "flex";
+            
+            // Reiniciar estado para la nueva ronda
+            arena.forEach(row => row.fill(0));
+            player.score = 0;
+            
+            // Revivir a todos visualmente y en memoria
+            for(let id in playersState) {
+                playersState[id].dead = false;
+                playersState[id].score = 0;
+                playersState[id].arena = createMatrix(ARENA_WIDTH, ARENA_HEIGHT);
+            }
+            playersState[myPeerId].arena = arena;
+            
+            gameActive = true;
+            playerReset();
+            update();
+            startMusic();
+            
+            document.getElementById('opponents-grid').innerHTML = "";
+            updateOpponentsUI();
+            sendMyUpdate();
+        }
+
+        // --- RENDERIZADO OPONENTES ---
+        function updateOpponentsUI() {
+            const aliveCount = Object.values(playersState).filter(p => !p.dead).length;
+            document.getElementById('player-count').innerText = aliveCount + " Vivos";
+
+            for (let id in playersState) {
+                if (id === myPeerId) continue;
+                createOpponentCanvasIfMissing(id);
+                drawOpponentArena(id);
+            }
+        }
+
+        function createOpponentCanvasIfMissing(id) {
+            if (document.getElementById('opp-container-' + id)) return;
+            const grid = document.getElementById('opponents-grid');
+            const p = playersState[id];
+
+            const container = document.createElement('div');
+            container.id = 'opp-container-' + id;
+            container.className = 'opponent-container';
+
+            const nameEl = document.createElement('div');
+            nameEl.className = 'opponent-name'; nameEl.innerText = p.name;
+            
+            const scoreEl = document.createElement('div');
+            scoreEl.className = 'opponent-score'; scoreEl.id = 'opp-score-' + id; scoreEl.innerText = "Pts: 0";
+
+            const canvasOpp = document.createElement('canvas');
+            canvasOpp.id = 'opp-canvas-' + id; canvasOpp.className = 'opponent-canvas';
+            canvasOpp.width = ARENA_WIDTH * 5; canvasOpp.height = ARENA_HEIGHT * 5;
+
+            const deathOverlay = document.createElement('div');
+            deathOverlay.className = 'death-overlay'; deathOverlay.innerText = "💀";
+
+            container.appendChild(nameEl); container.appendChild(scoreEl);
+            container.appendChild(canvasOpp); container.appendChild(deathOverlay);
+            grid.appendChild(container);
+        }
+
+        function removeOpponentCanvas(id) {
+            const el = document.getElementById('opp-container-' + id);
+            if(el) el.remove();
+        }
+
+        function drawOpponentArena(id) {
+            const p = playersState[id];
+            const canvasOpp = document.getElementById('opp-canvas-' + id);
+            const container = document.getElementById('opp-container-' + id);
+            const scoreEl = document.getElementById('opp-score-' + id);
+            
+            if (!canvasOpp || !p || !p.arena) return;
+
+            const ctxOpp = canvasOpp.getContext('2d');
+            scoreEl.innerText = "Pts: " + p.score;
+
+            if (p.dead) container.classList.add('dead');
+            else container.classList.remove('dead');
+
+            ctxOpp.fillStyle = '#000';
+            ctxOpp.fillRect(0, 0, canvasOpp.width, canvasOpp.height);
+
+            const blockSize = 5;
+            p.arena.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        ctxOpp.fillStyle = colors[value];
+                        ctxOpp.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+                        ctxOpp.strokeStyle = 'rgba(0,0,0,0.5)';
+                        ctxOpp.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize);
+                    }
+                });
+            });
+        }
+
+        // --- LÓGICA DE SHOWDOWN (VICTORIA) ---
+        function checkWinConditions() {
+            if (!isHost || !gameActive) return;
+
+            let allPlayers = Object.values(playersState);
+            let alivePlayers = allPlayers.filter(p => !p.dead);
+
+            // Solo comprobamos victoria si hay más de 1 jugador en la sala
+            if (allPlayers.length > 1) {
+                if (alivePlayers.length === 1) {
+                    endGameForAll(`¡${alivePlayers[0].name} ES EL GANADOR!`, "Último sobreviviente en pie.");
+                } else if (alivePlayers.length === 0) {
+                    endGameForAll("¡TODOS FUERON ELIMINADOS!", "Empate catastrófico.");
+                }
+            }
+        }
+
+        function endGameForAll(text, subtext) {
+            gameActive = false;
+            showWinner(text, subtext);
+            connections.forEach(conn => {
+                conn.send({ type: 'game_over', winnerText: text, winnerSubtext: subtext });
+            });
+        }
+
+        function showWinner(text, subtext = "") {
+            gameActive = false;
+            stopMusic(); // Apagar música
+            
+            document.getElementById('winner-screen').style.display = "block";
+            document.getElementById('winner-text').innerText = text;
+            document.getElementById('winner-subtext').innerText = subtext;
+
+            // Mostrar controles según rol
+            if (isHost) {
+                document.getElementById('host-controls').style.display = "block";
+                document.getElementById('client-waiting').style.display = "none";
+                checkStartRequirements(); // Comprobar si todavía somos más de 2 para "Seguir Jugando"
+            } else {
+                document.getElementById('host-controls').style.display = "none";
+                document.getElementById('client-waiting').style.display = "block";
+            }
+        }
+
+        function myPlayerDied() {
+            if (!gameActive || playersState[myPeerId].dead) return;
+            playersState[myPeerId].dead = true;
+            gameActive = false; 
+            
+            context.fillStyle = 'rgba(255, 13, 114, 0.7)';
+            context.fillRect(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
+            context.fillStyle = '#fff'; context.font = '2px Arial'; context.fillText("FIN", 4, 10);
+            
+            sendMyUpdate(); // Avisa la muerte
+        }
+
+        // --- LÓGICA CORE DEL TETRIS ---
+        function arenaSweep() {
+            let rowCount = 0;
+            outer: for (let y = arena.length - 1; y > 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) continue outer;
+                }
+                const row = arena.splice(y, 1)[0].fill(0);
+                arena.unshift(row); ++y; rowCount++;
+            }
+            if (rowCount > 0) {
+                const lineScores = [0, 10, 30, 50, 80];
+                player.score += lineScores[rowCount];
+                sendMyUpdate(); 
+            }
+        }
+
+        function collide(arena, player) {
+            const [m, o] = [player.matrix, player.pos];
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
+                }
+            }
+            return false;
+        }
+
+        function createMatrix(w, h) {
+            const matrix = []; while (h--) matrix.push(new Array(w).fill(0)); return matrix;
+        }
+
+        function createPiece(type) {
+            if (type === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
+            else if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+            else if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
+            else if (type === 'O') return [[4, 4], [4, 4]];
+            else if (type === 'Z') return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
+            else if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+            else if (type === 'T') return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
+        }
+
+        function draw() {
+            context.fillStyle = '#000'; context.fillRect(0, 0, canvas.width, canvas.height);
+            drawMatrix(arena, {x: 0, y: 0}, context); drawMatrix(player.matrix, player.pos, context);
+        }
+
+        function drawMatrix(matrix, offset, ctx) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        ctx.fillStyle = colors[value];
+                        ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
+                    }
+                });
+            });
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+                });
+            });
+        }
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+            }
+            if (dir > 0) matrix.forEach(row => row.reverse()); else matrix.reverse();
+        }
+
+        function playerDrop() {
+            if (!gameActive || playersState[myPeerId]?.dead) return;
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--; merge(arena, player); arenaSweep(); playerReset();
+                if(dropCounter > 0) sendMyUpdate(); 
+            }
+            dropCounter = 0;
+        }
+
+        function playerMove(dir) {
+            if (!gameActive || playersState[myPeerId]?.dead) return;
+            player.pos.x += dir;
+            if (collide(arena, player)) player.pos.x -= dir;
+        }
+
+        function playerReset() {
+            const pieces = 'ILJOTSZ';
+            player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+            player.pos.y = 0;
+            player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+            if (collide(arena, player)) myPlayerDied();
+        }
+
+        function playerRotate(dir) {
+            if (!gameActive || playersState[myPeerId]?.dead) return;
+            const pos = player.pos.x; let offset = 1; rotate(player.matrix, dir);
+            while (collide(arena, player)) {
+                player.pos.x += offset; offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.matrix[0].length) {
+                    rotate(player.matrix, -dir); player.pos.x = pos; return;
+                }
+            }
+        }
+
+        let dropCounter = 0; let dropInterval = 1000; let lastTime = 0;
+        function update(time = 0) {
+            if (!gameActive) return;
+            const deltaTime = time - lastTime; lastTime = time;
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) playerDrop();
+            draw(); requestAnimationFrame(update);
+        }
+
+        const arena = createMatrix(ARENA_WIDTH, ARENA_HEIGHT);
+        const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 };
+
+        document.addEventListener('keydown', event => {
+            if (!gameActive) return;
+            if (event.keyCode === 37) playerMove(-1);
+            else if (event.keyCode === 39) playerMove(1);
+            else if (event.keyCode === 40) playerDrop();
+            else if (event.keyCode === 38) playerRotate(1);
+        });
+    </script>
+</body>
+</html>
