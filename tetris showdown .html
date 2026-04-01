@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tetris Showdown</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            background: #1a1a22; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+
+        /* --- CONTROLES SUPERIORES (IDIOMA Y TUTORIAL) --- */
+        #top-bar {
+            position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; z-index: 20;
+        }
+        .small-btn {
+            background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;
+        }
+        .small-btn:hover { background: #555; }
+
+        /* --- MODAL TUTORIAL --- */
+        #tutorial-modal {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(20, 20, 30, 0.95); padding: 25px; border-radius: 15px; border: 2px solid #0DC2FF;
+            z-index: 100; max-width: 400px; text-align: left; box-shadow: 0 0 30px rgba(13,194,255,0.4);
+        }
+        #tutorial-modal h2 { color: #0DC2FF; margin-top: 0; text-align: center; }
+        #tutorial-modal p, #tutorial-modal li { font-size: 14px; line-height: 1.5; }
+        .close-btn { background: #FF0D72; width: 100%; margin-top: 15px; }
+
+        /* --- ESTILOS DEL MENÚ --- */
+        #menu-container {
+            background: #2a2a35; padding: 20px; border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); text-align: center;
+            width: 90%; max-width: 450px; z-index: 10;
+            max-height: 90vh; overflow-y: auto;
+        }
+        #menu-container h1 { margin-top: 0; color: #0DFF72; font-size: 32px; text-transform: uppercase; font-style: italic;}
+        
+        .profile-section { background: #111; padding: 10px; border-radius: 8px; border: 1px solid #FFE138; margin-bottom: 15px; }
+        .profile-section p { margin: 5px 0; font-weight: bold; color: #FFE138; font-size: 14px;}
+        .event-text { color: #FF0D72 !important; }
+
+        /* --- SECCIÓN CLANES --- */
+        .clan-section {
+            background: #1a1a22; padding: 10px; border-radius: 8px; border: 1px solid #F538FF; margin-bottom: 15px; text-align: left;
+        }
+        .clan-section h4 { margin: 0 0 10px 0; color: #F538FF; text-align: center; }
+        .clan-info { font-size: 13px; margin-bottom: 10px; }
+        .clan-tag { background: #F538FF; color: #fff; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+
+        input[type="text"] {
+            width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #555;
+            background: #111; color: #fff; box-sizing: border-box; font-size: 14px;
+        }
+        .checkbox-container {
+            display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; margin: 10px 0; color: #aaa;
+        }
+
+        button.action-btn {
+            width: 100%; padding: 10px; margin: 5px 0; font-size: 14px;
+            background: #3877FF; color: white; border: none; border-radius: 5px;
+            cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        button.action-btn:hover { background: #5088ff; }
+        button.action-btn:active { background: #2a5ac2; }
+        button:disabled { background: #555 !important; color: #aaa !important; cursor: not-allowed !important; }
+        
+        .host-info { margin-top: 10px; color: #FF8E0D; font-weight: bold; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;}
+        #host-waiting-msg { color: #FF0D72; margin-top: 10px; font-weight: bold; font-size: 14px; display: none; }
+
+        .visual-rooms-container {
+            background: #111; padding: 10px; border-radius: 8px; border: 1px solid #0DC2FF; margin: 15px 0;
+        }
+        .visual-rooms-container h4 { margin: 0 0 10px 0; color: #0DC2FF; font-size: 14px;}
+        .visual-grid { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+        .visual-grid button { width: 31%; background: #2a5ac2; padding: 8px 0; font-size: 12px;}
+
+        #leaderboard-section {
+            margin-top: 15px; background: #1a1a22; border-radius: 8px; padding: 10px; border: 1px solid #444;
+            max-height: 120px; overflow-y: auto; display: none;
+        }
+        #leaderboard-section h4 { margin: 0 0 10px 0; color: #0DC2FF; font-size: 14px;}
+        .leaderboard-item { display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px solid #333; padding: 3px 0;}
+        .leaderboard-item span.gold { color: #FFE138; font-weight: bold; }
+
+        /* --- PANTALLA DE JUEGO --- */
+        #game-wrapper {
+            display: none; width: 100%; height: 100vh;
+            flex-direction: row; padding: 10px; box-sizing: border-box; gap: 10px;
+        }
+        #local-player-section { display: flex; flex-direction: column; align-items: center; flex: 0 0 auto; width: 260px; }
+        
+        #game-info {
+            text-align: center; margin-bottom: 10px; font-size: 16px; color: #FFE138; font-weight: bold;
+            background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; text-transform: uppercase; border: 1px solid #FFE138; width: 100%; box-sizing: border-box;
+        }
+
+        #canvas-container { position: relative; }
+        #tetris { border: 4px solid #fff; background-color: #000; height: 55vh; max-height: 500px; width: 100%;}
+
+        .controls {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; width: 100%;
+        }
+        .controls button {
+            padding: 10px; font-size: 16px; background: #333; color: white;
+            border: 2px solid #555; border-radius: 8px; touch-action: manipulation;
+        }
+        .controls button:active { background: #555; }
+        .rotate { grid-column: 2; }
+
+        /* --- CHAT IN-GAME --- */
+        #chat-section {
+            display: none; flex-direction: column; background: #111; border: 1px solid #444; border-radius: 8px; margin-top: 10px; width: 100%; height: 120px;
+        }
+        #chat-messages { flex: 1; overflow-y: auto; padding: 5px; font-size: 12px; word-wrap: break-word; }
+        .chat-msg { margin-bottom: 3px; }
+        .chat-author { font-weight: bold; color: #0DC2FF; }
+        #chat-input-container { display: flex; border-top: 1px solid #444; }
+        #chat-input { border: none; background: transparent; color: white; padding: 5px; flex: 1; font-size: 12px; outline: none;}
+        #chat-send-btn { background: #0DFF72; color: black; border: none; padding: 0 10px; cursor: pointer; font-weight: bold;}
+
+        /* --- OPONENTES --- */
+        #opponents-section {
+            flex: 1 1 auto; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; 
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid #444; min-width: 150px;
+        }
+        #opponents-section h3 { margin-top: 0; font-size: 14px; text-align: center; color: #0DFF72; border-bottom: 1px solid #444; padding-bottom: 5px;}
+        #opponents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; overflow-y: auto; padding-right: 5px; }
+
+        .opponent-container {
+            background: #2a2a35; border-radius: 8px; padding: 4px; text-align: center; border: 2px solid #444; position: relative; display: flex; flex-direction: column; align-items: center;
+        }
+        .opponent-name { font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .opponent-score { font-size: 10px; color: #FFE138; margin-bottom: 2px;}
+        .opponent-canvas { background: #000; border: 1px solid #999; width: 100%; aspect-ratio: 12 / 20; max-width: 60px; }
+
+        .opponent-container.dead { border-color: #FF0D72; opacity: 0.5; }
+        .opponent-container.dead .opponent-name { color: #FF0D72; }
+        .death-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 13, 114, 0.4); color: white; font-size: 20px;
+            align-items: center; justify-content: center; border-radius: 8px;
+        }
+        .opponent-container.dead .death-overlay { display: flex; }
+
+        /* --- PANTALLA DE VICTORIA --- */
+        #winner-screen {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); padding: 30px; border-radius: 15px; border: 3px solid #0DFF72;
+            text-align: center; z-index: 100; box-shadow: 0 0 40px rgba(13,255,114,0.4); min-width: 280px;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <button class="small-btn" onclick="toggleTutorial()" id="lang-tut-btn">📖 Tutorial</button>
+        <button class="small-btn" onclick="toggleLanguage()" id="lang-toggle-btn">ES / EN</button>
+    </div>
+
+    <div id="tutorial-modal">
+        <h2 id="tut-title">Cómo Jugar</h2>
+        <p id="tut-p1">Sobrevive más que tus oponentes colocando las piezas sin que lleguen al tope.</p>
+        <ul>
+            <li id="tut-li1"><b>Clásico:</b> Partida estándar (Hasta 100 jug.).</li>
+            <li id="tut-li2"><b>Torneo:</b> Gana Trofeos (Hasta 850 jug.).</li>
+            <li id="tut-li3"><b>Evento:</b> Usa tickets, reglas especiales.</li>
+            <li id="tut-li4"><b>Esports:</b> Exclusivo para clanes grandes. Premios masivos.</li>
+        </ul>
+        <button class="small-btn close-btn" onclick="toggleTutorial()" id="tut-close">Cerrar</button>
+    </div>
+
+    <div id="menu-container">
+        <h1>Tetris Showdown</h1>
+        
+        <div class="profile-section">
+            <p><span id="lang-trophies">Trofeos (Torneo):</span> <span id="my-trophies-display">0</span> 🏆</p>
+            <p class="event-text"><span id="lang-tickets">Tickets de Evento:</span> <span id="event-tickets-display">3</span>/3 🎟️</p>
+        </div>
+
+        <input type="text" id="username" placeholder="Tu Nombre de Usuario" maxlength="12">
+        
+        <div class="clan-section" id="clan-ui-container">
+            <h4 id="lang-clan-title">⚔️ Tu Clan</h4>
+            <div id="clan-logged-out">
+                <input type="text" id="clan-name-input" placeholder="Nombre del Clan" maxlength="10">
+                <div style="display:flex; gap:5px;">
+                    <button class="action-btn" style="background:#F538FF;" onclick="createClan()" id="lang-btn-create-clan">Crear Clan</button>
+                    <button class="action-btn" style="background:#444;" onclick="joinClanLocal()" id="lang-btn-join-clan">Unirse Local</button>
+                </div>
+            </div>
+            <div id="clan-logged-in" style="display:none;">
+                <div class="clan-info">
+                    <span class="clan-tag" id="clan-tag-display">[TAG]</span> <span id="clan-name-display">Nombre</span><br>
+                    Nivel: <span id="clan-level-display">1</span> (XP: <span id="clan-xp-display">0</span>)<br>
+                    Miembros: <span id="clan-members-display">1</span>
+                </div>
+                <button class="action-btn" style="background:#FF0D72; padding: 5px; font-size: 12px;" onclick="leaveClan()" id="lang-btn-leave-clan">Abandonar Clan</button>
+            </div>
+        </div>
+
+        <hr style="border-color: #555; margin: 10px 0;">
+
+        <div class="visual-rooms-container">
+            <h4 id="lang-public-rooms">🌐 Salas Públicas</h4>
+            <div class="visual-grid">
+                <button class="action-btn" onclick="joinOrHostVisual('SALA-GLOBAL-1')">SALA 1</button>
+                <button class="action-btn" onclick="joinOrHostVisual('SALA-GLOBAL-2')">SALA 2</button>
+                <button class="action-btn" onclick="joinOrHostVisual('SALA-GLOBAL-3')">SALA 3</button>
+            </div>
+            <div id="visual-status" style="margin-top: 8px; color: #0DFF72; font-size: 12px; font-weight: bold;"></div>
+        </div>
+        
+        <h3 id="lang-create-private" style="font-size: 16px; margin-bottom: 5px;">Crear Sala Privada</h3>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="host-chat-enabled" style="width:auto; margin:0;"> 
+            <label for="host-chat-enabled" id="lang-enable-chat">Habilitar Chat de Partida</label>
+        </div>
+
+        <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+            <button class="action-btn" style="background:#0DFF72; color:#000; width:48%;" onclick="hostRoom('classic')" id="lang-btn-classic">Clásico</button>
+            <button class="action-btn" style="background:#FFE138; color:#000; width:48%;" onclick="hostRoom('tournament')" id="lang-btn-tourney">Torneo 🏆</button>
+            <button class="action-btn" style="background:#FF0D72; color:#fff; width:48%;" onclick="hostRoom('event')" id="lang-btn-event">Evento 🎟️</button>
+            <button class="action-btn" id="btn-crear-esports" style="background:#0DC2FF; color:#fff; width:48%;" onclick="hostRoom('esports')" disabled>Esports ⚔️</button>
+        </div>
+        <p style="font-size: 10px; color: #aaa; margin-top: 5px;" id="lang-esports-req">* Esports requiere un Clan con 4+ miembros.</p>
+        
+        <div id="room-id-display" class="host-info"></div>
+        <div id="host-waiting-msg" id="lang-waiting-players">Esperando jugadores...</div>
+        <button class="action-btn" id="start-game-btn" style="display:none; background:#F538FF; color:#fff; margin-top:10px;" onclick="startGameHost()" id="lang-btn-start">▶ ¡Iniciar Ronda!</button>
+
+        <div id="leaderboard-section">
+            <h4 id="lang-room-leaderboard">🏆 Tabla de la Sala</h4>
+            <div id="leaderboard-list"></div>
+        </div>
+
+        <hr style="border-color: #555; margin-top: 15px;">
+        
+        <h3 id="lang-join-private" style="font-size: 16px; margin-bottom: 5px;">Unirse a Sala</h3>
+        <input type="text" id="join-id" placeholder="Ingresa la ID del Host">
+        <button id="btn-unirse-sala" class="action-btn" style="background:#0DC2FF;" onclick="joinRoom()" id="lang-btn-join">Conectarse</button>
+        <div id="join-status" class="host-info"></div>
+    </div>
+
+    <div id="game-wrapper">
+        <div id="local-player-section">
+            <div id="game-info"><span id="lang-mode-lbl">Modo:</span> <span id="mode-display-game">Clásico</span></div>
+            <div id="canvas-container">
+                <canvas id="tetris" width="240" height="400"></canvas>
+            </div>
+            
+            <div id="chat-section">
+                <div id="chat-messages"></div>
+                <div id="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Escribe..." maxlength="40" onkeypress="handleChatKey(event)">
+                    <button id="chat-send-btn" onclick="sendChatMessage()">➤</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button onclick="playerRotate(-1)">↺</button>
+                <button class="rotate" onclick="playerRotate(1)">↻</button>
+                <span></span>
+                <button onclick="playerMove(-1)">←</button>
+                <button onclick="playerDrop()">↓</button>
+                <button onclick="playerMove(1)">→</button>
+            </div>
+        </div>
+        
+        <div id="opponents-section">
+            <h3><span id="lang-survivors">SUPERVIVIENTES</span> (<span id="player-count">1</span>)</h3>
+            <div id="opponents-grid"></div>
+        </div>
+    </div>
+
+    <div id="winner-screen">
+        <h1 id="winner-text" style="color: #0DFF72; margin-top:0;">¡Ronda Terminada!</h1>
+        <p id="winner-subtext" style="font-size: 18px; color: #fff; margin-bottom: 25px;"></p>
+        
+        <div id="host-controls" style="display:none;">
+            <div id="host-end-waiting-msg" style="color: #FF8E0D; margin-bottom: 10px; display: none;" id="lang-waiting-missing">Faltan jugadores.</div>
+            <button class="action-btn" id="play-again-btn" style="background: #0DC2FF;" onclick="playAgainHost()" id="lang-btn-next-round">Siguiente Ronda</button>
+        </div>
+        
+        <div id="client-waiting" style="display:none; color: #0DC2FF; margin-bottom: 15px; font-weight: bold;" id="lang-waiting-host">
+            Esperando al Host...
+        </div>
+        
+        <button class="action-btn" style="background: #FF0D72; margin-top: 10px;" onclick="location.reload()" id="lang-btn-exit">Salir al Menú</button>
+    </div>
+
+    <script>
+        // --- SISTEMA DE IDIOMAS ---
+        let currentLang = 'es';
+        const dict = {
+            es: {
+                lang_toggle: "ES / EN", tut_btn: "📖 Tutorial",
+                tut_title: "Cómo Jugar", tut_p1: "Sobrevive más que tus oponentes colocando las piezas sin que lleguen al tope.",
+                tut_close: "Cerrar", trophies: "Trofeos (Torneo):", tickets: "Tickets de Evento:",
+                clan_title: "⚔️ Tu Clan", btn_create_clan: "Crear Clan", btn_join_clan: "Unirse Local", btn_leave_clan: "Abandonar Clan",
+                public_rooms: "🌐 Salas Públicas", create_private: "Crear Sala Privada", enable_chat: "Habilitar Chat de Partida",
+                btn_classic: "Clásico", btn_tourney: "Torneo 🏆", btn_event: "Evento 🎟️", esports_req: "* Esports requiere un Clan con 4+ miembros.",
+                room_leaderboard: "🏆 Tabla de la Sala", join_private: "Unirse a Sala", btn_join: "Conectarse",
+                mode_lbl: "Modo:", survivors: "SUPERVIVIENTES", waiting_missing: "Faltan jugadores.", btn_next_round: "Siguiente Ronda",
+                waiting_host: "Esperando al Host...", btn_exit: "Salir al Menú", btn_start: "▶ ¡Iniciar Ronda!"
+            },
+            en: {
+                lang_toggle: "EN / ES", tut_btn: "📖 Tutorial",
+                tut_title: "How to Play", tut_p1: "Outlast your opponents by placing pieces without reaching the top.",
+                tut_close: "Close", trophies: "Trophies (Tourney):", tickets: "Event Tickets:",
+                clan_title: "⚔️ Your Clan", btn_create_clan: "Create Clan", btn_join_clan: "Join Local", btn_leave_clan: "Leave Clan",
+                public_rooms: "🌐 Public Rooms", create_private: "Create Private Room", enable_chat: "Enable Match Chat",
+                btn_classic: "Classic", btn_tourney: "Tourney 🏆", btn_event: "Event 🎟️", esports_req: "* Esports needs a Clan with 4+ members.",
+                room_leaderboard: "🏆 Room Leaderboard", join_private: "Join Room", btn_join: "Connect",
+                mode_lbl: "Mode:", survivors: "SURVIVORS", waiting_missing: "Waiting for players.", btn_next_round: "Next Round",
+                waiting_host: "Waiting for Host...", btn_exit: "Exit to Menu", btn_start: "▶ Start Round!"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'es' ? 'en' : 'es';
+            document.getElementById('lang-toggle-btn').innerText = dict[currentLang].lang_toggle;
+            document.getElementById('lang-tut-btn').innerText = dict[currentLang].tut_btn;
+            document.getElementById('tut-title').innerText = dict[currentLang].tut_title;
+            document.getElementById('tut-p1').innerText = dict[currentLang].tut_p1;
+            document.getElementById('tut-close').innerText = dict[currentLang].tut_close;
+            document.getElementById('lang-trophies').innerText = dict[currentLang].trophies;
+            document.getElementById('lang-tickets').innerText = dict[currentLang].tickets;
+            document.getElementById('lang-clan-title').innerText = dict[currentLang].clan_title;
+            document.getElementById('lang-btn-create-clan').innerText = dict[currentLang].btn_create_clan;
+            document.getElementById('lang-btn-join-clan').innerText = dict[currentLang].btn_join_clan;
+            document.getElementById('lang-btn-leave-clan').innerText = dict[currentLang].btn_leave_clan;
+            document.getElementById('lang-public-rooms').innerText = dict[currentLang].public_rooms;
+            document.getElementById('lang-create-private').innerText = dict[currentLang].create_private;
+            document.getElementById('lang-enable-chat').innerText = dict[currentLang].enable_chat;
+            document.getElementById('lang-btn-classic').innerText = dict[currentLang].btn_classic;
+            document.getElementById('lang-btn-tourney').innerText = dict[currentLang].btn_tourney;
+            document.getElementById('lang-btn-event').innerText = dict[currentLang].btn_event;
+            document.getElementById('lang-esports-req').innerText = dict[currentLang].esports_req;
+            document.getElementById('lang-room-leaderboard').innerText = dict[currentLang].room_leaderboard;
+            document.getElementById('lang-join-private').innerText = dict[currentLang].join_private;
+            document.getElementById('btn-unirse-sala').innerText = dict[currentLang].btn_join;
+            document.getElementById('lang-mode-lbl').innerText = dict[currentLang].mode_lbl;
+            document.getElementById('lang-survivors').innerText = dict[currentLang].survivors;
+            document.getElementById('play-again-btn').innerText = dict[currentLang].btn_next_round;
+            document.getElementById('client-waiting').innerText = dict[currentLang].waiting_host;
+            document.getElementById('lang-btn-exit').innerText = dict[currentLang].btn_exit;
+            document.getElementById('start-game-btn').innerText = dict[currentLang].btn_start;
+        }
+
+        function toggleTutorial() {
+            const modal = document.getElementById('tutorial-modal');
+            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // --- SISTEMA DE AUDIO ---
+        let audioCtx = null; let musicInterval = null;
+        const melodyGame = [659, 493, 523, 587, 523, 493, 440, 440, 523, 659, 587, 523, 493, 523, 587, 659, 523, 440, 440];
+        const melodyMenu = [329, 392, 440, 523, 440, 392, 329, 261, 329, 392, 440, 392]; 
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playNote(freq, type = 'square') {
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime); 
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function startMusic(type) {
+            initAudio(); if (musicInterval) clearInterval(musicInterval);
+            let melody = type === 'game' ? melodyGame : melodyMenu;
+            let speed = type === 'game' ? 250 : 350;
+            let oscType = type === 'game' ? 'square' : 'triangle';
+            let i = 0;
+            playNote(melody[0], oscType); i++; 
+            musicInterval = setInterval(() => { playNote(melody[i % melody.length], oscType); i++; }, speed);
+        }
+
+        document.body.addEventListener('click', () => {
+            if (!audioCtx) { initAudio(); if (!gameActive) startMusic('menu'); }
+        });
+
+        // --- DATOS LOCALES Y CLANES ---
+        let myTrophies = parseInt(localStorage.getItem('tetrisShowdownTrophies')) || 0;
+        document.getElementById('my-trophies-display').innerText = myTrophies;
+
+        let now = new Date();
+        let eventData = JSON.parse(localStorage.getItem('tetrisEventData')) || { month: now.getMonth(), tickets: 3 };
+        if (eventData.month !== now.getMonth()) {
+            eventData.month = now.getMonth(); eventData.tickets = 3;
+            localStorage.setItem('tetrisEventData', JSON.stringify(eventData));
+        }
+        document.getElementById('event-tickets-display').innerText = eventData.tickets;
+
+        // Lógica de Clan (Simulada Localmente)
+        let myClan = JSON.parse(localStorage.getItem('tetrisShowdownClan')) || null;
+        
+        function updateClanUI() {
+            const loggedOut = document.getElementById('clan-logged-out');
+            const loggedIn = document.getElementById('clan-logged-in');
+            const btnEsports = document.getElementById('btn-crear-esports');
+
+            if (myClan) {
+                loggedOut.style.display = 'none'; loggedIn.style.display = 'block';
+                document.getElementById('clan-tag-display').innerText = `[${myClan.tag}]`;
+                document.getElementById('clan-name-display').innerText = myClan.name;
+                document.getElementById('clan-level-display').innerText = Math.floor(myClan.xp / 100) + 1;
+                document.getElementById('clan-xp-display').innerText = myClan.xp;
+                document.getElementById('clan-members-display').innerText = myClan.members;
+                
+                if(myClan.members >= 4) { btnEsports.disabled = false; btnEsports.style.opacity = "1"; }
+                else { btnEsports.disabled = true; btnEsports.style.opacity = "0.5"; }
+            } else {
+                loggedOut.style.display = 'block'; loggedIn.style.display = 'none';
+                btnEsports.disabled = true; btnEsports.style.opacity = "0.5";
+            }
+        }
+
+        function createClan() {
+            const name = document.getElementById('clan-name-input').value.trim();
+            if(!name) { alert("Ingresa un nombre"); return; }
+            const tag = name.substring(0,3).toUpperCase();
+            myClan = { name: name, tag: tag, xp: 0, members: 1 }; // Empieza con 1, pero puedes simular que se unen para probar Esports
+            if(confirm("¿Simular que se unen 3 amigos al clan para desbloquear Esports?")) myClan.members = 4;
+            localStorage.setItem('tetrisShowdownClan', JSON.stringify(myClan));
+            updateClanUI();
+        }
+
+        function joinClanLocal() {
+            const name = document.getElementById('clan-name-input').value.trim();
+            if(!name) { alert("Ingresa el nombre del clan local a unirse"); return; }
+            const tag = name.substring(0,3).toUpperCase();
+            myClan = { name: name, tag: tag, xp: 50, members: Math.floor(Math.random()*20)+2 };
+            localStorage.setItem('tetrisShowdownClan', JSON.stringify(myClan));
+            updateClanUI();
+        }
+
+        function leaveClan() {
+            myClan = null; localStorage.removeItem('tetrisShowdownClan'); updateClanUI();
+        }
+        updateClanUI();
+
+        // --- VARIABLES GLOBALES RED ---
+        const ARENA_WIDTH = 12; const ARENA_HEIGHT = 20;
+        let peer = null; let connections = []; 
+        let isHost = false; let hostConnection = null; 
+        
+        let myUsername = ""; let gameActive = false;
+        let playersState = {}; let myPeerId = null;
+        let currentRoomMode = 'classic'; let maxPlayers = 100;
+        let isChatEnabled = false;
+
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        context.scale(20, 20);
+        const colors = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
+
+        // --- RED Y CONEXIONES (PeerJS) ---
+        function checkStartRequirements() {
+            if (!isHost) return;
+            const playerCount = Object.keys(playersState).length;
+            const startBtn = document.getElementById('start-game-btn');
+            const waitingMsg = document.getElementById('host-waiting-msg');
+            
+            if (playerCount >= 2) {
+                startBtn.style.display = "block"; waitingMsg.style.display = "none";
+            } else {
+                startBtn.style.display = "none"; waitingMsg.style.display = "block";
+                waitingMsg.innerText = (currentLang==='es'?"Esperando jugadores...":"Waiting for players...")+` (${playerCount}/${maxPlayers})`;
+            }
+
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const endWaitingMsg = document.getElementById('host-end-waiting-msg');
+            if (playerCount >= 2) {
+                playAgainBtn.style.display = "block"; endWaitingMsg.style.display = "none";
+            } else {
+                playAgainBtn.style.display = "none"; endWaitingMsg.style.display = "block";
+            }
+        }
+
+        function lockHostButtons() {
+            const btns = document.querySelectorAll('.action-btn');
+            btns.forEach(b => { if(b.id !== 'start-game-btn' && b.id !== 'play-again-btn') b.disabled = true; });
+        }
+
+        function getFullUsername() {
+            let base = document.getElementById('username').value || "Jugador" + Math.floor(Math.random()*100);
+            return myClan ? `[${myClan.tag}] ${base}` : base;
+        }
+
+        function joinOrHostVisual(fixedId) {
+            lockHostButtons(); myUsername = getFullUsername();
+            const statusBox = document.getElementById('visual-status');
+            statusBox.innerText = "Buscando...";
+            
+            peer = new Peer();
+            peer.on('open', (id) => {
+                myPeerId = id; 
+                hostConnection = peer.connect(fixedId, { reliable: true });
+                
+                hostConnection.on('open', () => {
+                    statusBox.innerText = "¡Sala encontrada!";
+                    document.getElementById('join-status').innerText = "Conectado a la Sala Pública.";
+                    hostConnection.send({ type: 'join', name: myUsername, arena: arena, trophies: myTrophies });
+                });
+                
+                hostConnection.on('data', (data) => handleNetworkData(data, fixedId));
+                hostConnection.on('close', () => { alert("Desconectado."); location.reload(); });
+            });
+
+            peer.on('error', (err) => {
+                if (err.type === 'peer-unavailable') {
+                    statusBox.innerText = "Sala vacía. Creando...";
+                    peer.destroy(); 
+                    setTimeout(() => hostSpecificRoom(fixedId, 'classic'), 500);
+                } else { alert("Error: " + err.type); location.reload(); }
+            });
+        }
+
+        function hostSpecificRoom(customId, mode) {
+            currentRoomMode = mode; maxPlayers = 100; isHost = true;
+            isChatEnabled = document.getElementById('host-chat-enabled').checked;
+            peer = new Peer(customId); setupHostEvents("SALA PÚBLICA:\n" + customId);
+        }
+
+        function hostRoom(mode) {
+            if (mode === 'event') {
+                if (eventData.tickets <= 0) { alert("Sin tickets. / No tickets."); return; }
+                eventData.tickets--; localStorage.setItem('tetrisEventData', JSON.stringify(eventData));
+                document.getElementById('event-tickets-display').innerText = eventData.tickets;
+            } else if (mode === 'esports') {
+                if (!myClan || myClan.members < 4) { alert("Requiere clan de 4+"); return; }
+            }
+
+            lockHostButtons();
+            currentRoomMode = mode;
+            maxPlayers = mode === 'tournament' ? 850 : (mode === 'esports' ? 40 : 100);
+            myUsername = getFullUsername();
+            isHost = true;
+            isChatEnabled = document.getElementById('host-chat-enabled').checked;
+            
+            peer = new Peer(); setupHostEvents(null);
+        }
+
+        function setupHostEvents(customText) {
+            peer.on('open', (id) => {
+                myPeerId = id;
+                playersState[id] = { name: myUsername, score: 0, dead: false, arena: createMatrix(ARENA_WIDTH, ARENA_HEIGHT), trophies: myTrophies };
+                
+                let modoText = currentRoomMode === 'tournament' ? "TORNEO 🏆" : (currentRoomMode === 'event' ? "EVENTO 🎟️" : (currentRoomMode === 'esports' ? "ESPORTS ⚔️" : "CLÁSICO"));
+                document.getElementById('room-id-display').innerText = customText ? customText : ("CÓDIGO PRIVADO:\n" + id + "\nModo: " + modoText);
+                document.getElementById('leaderboard-section').style.display = "block";
+                
+                checkStartRequirements(); updateLeaderboardUI();
+            });
+
+            peer.on('connection', (conn) => {
+                if (Object.keys(playersState).length >= maxPlayers) {
+                    conn.send({ type: 'error', msg: 'La sala está llena.' });
+                    setTimeout(() => conn.close(), 1000); return;
+                }
+                connections.push(conn);
+                conn.on('data', (data) => handleNetworkData(data, conn.peer));
+                conn.on('close', () => {
+                    if(playersState[conn.peer]) {
+                        delete playersState[conn.peer]; removeOpponentCanvas(conn.peer);
+                        broadcastState(); checkStartRequirements(); updateLeaderboardUI();
+                        if(gameActive) checkWinConditions();
+                    }
+                });
+            });
+            peer.on('error', (err) => alert("Error: " + err.type));
+        }
+
+        function joinRoom() {
+            lockHostButtons(); myUsername = getFullUsername();
+            const hostId = document.getElementById('join-id').value.trim();
+            if (!hostId) { alert("Ingresa un código"); location.reload(); return; }
+            
+            document.getElementById('join-status').innerText = "Conectando...";
+            peer = new Peer();
+            peer.on('open', (id) => {
+                myPeerId = id; hostConnection = peer.connect(hostId, { reliable: true });
+                hostConnection.on('open', () => {
+                    document.getElementById('join-status').innerText = "¡Conectado! Esperando...";
+                    hostConnection.send({ type: 'join', name: myUsername, arena: arena, trophies: myTrophies });
+                });
+                hostConnection.on('data', (data) => handleNetworkData(data, hostId));
+                hostConnection.on('close', () => { alert("Desconectado."); location.reload(); });
+            });
+            peer.on('error', (err) => alert("Error: " + err.type));
+        }
+
+        // --- MANEJO DE CHAT ---
+        function handleChatKey(e) { if(e.key === 'Enter') sendChatMessage(); }
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input'); const msg = input.value.trim();
+            if(!msg || !isChatEnabled) return;
+            const chatData = { type: 'chat', name: myUsername, text: msg };
+            
+            if(isHost) { broadcastChat(chatData); appendChatMsg(chatData.name, chatData.text); } 
+            else { hostConnection.send(chatData); }
+            input.value = "";
+        }
+        function broadcastChat(chatData) {
+            connections.forEach(conn => conn.send(chatData));
+        }
+        function appendChatMsg(name, text) {
+            const box = document.getElementById('chat-messages');
+            const div = document.createElement('div'); div.className = 'chat-msg';
+            div.innerHTML = `<span class="chat-author">${name}:</span> ${text}`;
+            box.appendChild(div); box.scrollTop = box.scrollHeight;
+        }
+
+        function handleNetworkData(data, senderId) {
+            if (data.type === 'join') {
+                if (isHost) {
+                    playersState[senderId] = { name: data.name, score: 0, dead: false, arena: data.arena, trophies: data.trophies || 0 };
+                    broadcastState(); checkStartRequirements(); updateLeaderboardUI();
+                }
+            } else if (data.type === 'state_sync') {
+                playersState = data.state; currentRoomMode = data.mode; isChatEnabled = data.chat;
+                document.getElementById('leaderboard-section').style.display = "block";
+                updateOpponentsUI(); updateLeaderboardUI();
+            } else if (data.type === 'start_game') {
+                isChatEnabled = data.chat;
+                startGameLocal();
+            } else if (data.type === 'update_player') {
+                if (playersState[senderId]) {
+                    playersState[senderId].score = data.score; playersState[senderId].dead = data.dead;
+                    if (data.arena) playersState[senderId].arena = data.arena;
+                    if (isHost) { broadcastState(); checkWinConditions(); } else { drawOpponentArena(senderId); }
+                }
+            } else if (data.type === 'game_over') {
+                if (data.winnerId === myPeerId) giveRewards();
+                showWinner(data.winnerText, data.winnerSubtext);
+            } else if (data.type === 'chat') {
+                if (isHost) { broadcastChat(data); appendChatMsg(data.name, data.text); } 
+                else { appendChatMsg(data.name, data.text); }
+            }
+        }
+
+        function broadcastState() {
+            if (!isHost) return;
+            connections.forEach(conn => conn.send({ type: 'state_sync', state: playersState, mode: currentRoomMode, chat: isChatEnabled }));
+            updateOpponentsUI();
+        }
+
+        function sendMyUpdate() {
+            if (!peer || !myPeerId) return;
+            const myData = { type: 'update_player', score: player.score, dead: playersState[myPeerId].dead, arena: arena, trophies: myTrophies };
+            if (isHost) {
+                playersState[myPeerId].score = player.score; playersState[myPeerId].arena = arena;
+                broadcastState(); checkWinConditions();
+            } else if (hostConnection && hostConnection.open) { hostConnection.send(myData); }
+        }
+
+        function updateLeaderboardUI() {
+            const list = document.getElementById('leaderboard-list'); list.innerHTML = "";
+            let sortedPlayers = Object.values(playersState).sort((a, b) => b.trophies - a.trophies);
+            sortedPlayers.forEach((p, index) => {
+                const item = document.createElement('div'); item.className = 'leaderboard-item';
+                item.innerHTML = `<span>#${index+1} ${p.name}</span> <span class="gold">${p.trophies} 🏆</span>`;
+                list.appendChild(item);
+            });
+        }
+
+        // --- CONTROL DE RONDAS ---
+        function startGameHost() {
+            if (Object.keys(playersState).length < 2) return; 
+            connections.forEach(conn => conn.send({ type: 'start_game', chat: isChatEnabled }));
+            startGameLocal();
+        }
+
+        function playAgainHost() {
+            if (Object.keys(playersState).length < 2) return;
+            document.getElementById('winner-screen').style.display = "none";
+            startGameHost();
+        }
+
+        function startGameLocal() {
+            document.getElementById('menu-container').style.display = "none";
+            document.getElementById('winner-screen').style.display = "none";
+            document.getElementById('game-wrapper').style.display = "flex";
+            
+            // Mostrar chat si está habilitado
+            document.getElementById('chat-section').style.display = isChatEnabled ? "flex" : "none";
+            document.getElementById('chat-messages').innerHTML = ""; // limpiar chat
+            
+            let modoTexto = "CLÁSICO";
+            if(currentRoomMode === 'tournament') modoTexto = "TORNEO 🏆";
+            else if(currentRoomMode === 'event') modoTexto = "EVENTO 🌟";
+            else if(currentRoomMode === 'esports') modoTexto = "ESPORTS ⚔️";
+            document.getElementById('mode-display-game').innerText = modoTexto;
+            
+            arena.forEach(row => row.fill(0)); player.score = 0;
+            
+            for(let id in playersState) {
+                playersState[id].dead = false; playersState[id].score = 0;
+                playersState[id].arena = createMatrix(ARENA_WIDTH, ARENA_HEIGHT);
+            }
+            playersState[myPeerId].arena = arena;
+            
+            gameActive = true; playerReset(); update(); 
+            startMusic('game'); 
+            
+            document.getElementById('opponents-grid').innerHTML = ""; updateOpponentsUI(); sendMyUpdate();
+        }
+
+        // --- RENDERIZADO OPONENTES ---
+        function updateOpponentsUI() {
+            const aliveCount = Object.values(playersState).filter(p => !p.dead).length;
+            document.getElementById('player-count').innerText = aliveCount;
+            for (let id in playersState) {
+                if (id === myPeerId) continue;
+                createOpponentCanvasIfMissing(id); drawOpponentArena(id);
+            }
+        }
+
+        function createOpponentCanvasIfMissing(id) {
+            if (document.getElementById('opp-container-' + id)) return;
+            const grid = document.getElementById('opponents-grid'); const p = playersState[id];
+            const container = document.createElement('div'); container.id = 'opp-container-' + id; container.className = 'opponent-container';
+            const nameEl = document.createElement('div'); nameEl.className = 'opponent-name'; nameEl.innerText = p.name;
+            const scoreEl = document.createElement('div'); scoreEl.className = 'opponent-score'; scoreEl.id = 'opp-score-' + id; scoreEl.innerText = "Pts: 0";
+            const canvasOpp = document.createElement('canvas'); canvasOpp.id = 'opp-canvas-' + id; canvasOpp.className = 'opponent-canvas';
+            canvasOpp.width = ARENA_WIDTH * 5; canvasOpp.height = ARENA_HEIGHT * 5;
+            const deathOverlay = document.createElement('div'); deathOverlay.className = 'death-overlay'; deathOverlay.innerText = "💀";
+
+            container.appendChild(nameEl); container.appendChild(scoreEl); container.appendChild(canvasOpp); container.appendChild(deathOverlay); grid.appendChild(container);
+        }
+
+        function removeOpponentCanvas(id) {
+            const el = document.getElementById('opp-container-' + id); if(el) el.remove();
+        }
+
+        function drawOpponentArena(id) {
+            const p = playersState[id]; const canvasOpp = document.getElementById('opp-canvas-' + id);
+            const container = document.getElementById('opp-container-' + id); const scoreEl = document.getElementById('opp-score-' + id);
+            if (!canvasOpp || !p || !p.arena) return;
+
+            const ctxOpp = canvasOpp.getContext('2d'); scoreEl.innerText = "Pts: " + p.score;
+            if (p.dead) container.classList.add('dead'); else container.classList.remove('dead');
+
+            ctxOpp.fillStyle = '#000'; ctxOpp.fillRect(0, 0, canvasOpp.width, canvasOpp.height);
+            const blockSize = 5;
+            p.arena.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        ctxOpp.fillStyle = colors[value]; ctxOpp.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+                        ctxOpp.strokeStyle = 'rgba(0,0,0,0.5)'; ctxOpp.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize);
+                    }
+                });
+            });
+        }
+
+        // --- VICTORIA Y RECOMPENSAS ---
+        function checkWinConditions() {
+            if (!isHost || !gameActive) return;
+            let aliveIds = Object.keys(playersState).filter(id => !playersState[id].dead);
+            let allIds = Object.keys(playersState);
+
+            if (allIds.length > 1) {
+                if (aliveIds.length === 1) {
+                    let winnerId = aliveIds[0];
+                    let sub = currentRoomMode === 'tournament' ? "¡Ha ganado un Trofeo 🏆!" : (currentRoomMode === 'esports' ? "¡PREMIO MASIVO DE ESPORTS ⚔️🏆!" : "Último sobreviviente.");
+                    endGameForAll(`¡${playersState[winnerId].name} GANA!`, sub, winnerId);
+                } else if (aliveIds.length === 0) {
+                    endGameForAll("¡TODOS FUERON ELIMINADOS!", "Empate catastrófico.", null);
+                }
+            }
+        }
+
+        function giveRewards() {
+            if (currentRoomMode === 'tournament') myTrophies += 1;
+            else if (currentRoomMode === 'esports') myTrophies += 50; // Premio Masivo
+            
+            if (currentRoomMode === 'tournament' || currentRoomMode === 'esports') {
+                localStorage.setItem('tetrisShowdownTrophies', myTrophies);
+                document.getElementById('my-trophies-display').innerText = myTrophies;
+                playersState[myPeerId].trophies = myTrophies; 
+                
+                // Dar XP al Clan
+                if(myClan) {
+                    myClan.xp += (currentRoomMode === 'esports' ? 100 : 10);
+                    localStorage.setItem('tetrisShowdownClan', JSON.stringify(myClan));
+                    updateClanUI();
+                }
+                updateLeaderboardUI();
+            }
+        }
+
+        function endGameForAll(text, subtext, winnerId) {
+            gameActive = false;
+            if (winnerId === myPeerId) giveRewards();
+            showWinner(text, subtext);
+            connections.forEach(conn => { conn.send({ type: 'game_over', winnerText: text, winnerSubtext: subtext, winnerId: winnerId }); });
+        }
+
+        function showWinner(text, subtext = "") {
+            gameActive = false; startMusic('menu'); 
+            document.getElementById('winner-screen').style.display = "block";
+            document.getElementById('winner-text').innerText = text;
+            document.getElementById('winner-subtext').innerText = subtext;
+
+            if (isHost) {
+                document.getElementById('host-controls').style.display = "block"; document.getElementById('client-waiting').style.display = "none";
+                checkStartRequirements(); updateLeaderboardUI();
+            } else {
+                document.getElementById('host-controls').style.display = "none"; document.getElementById('client-waiting').style.display = "block";
+            }
+        }
+
+        function myPlayerDied() {
+            if (!gameActive || playersState[myPeerId].dead) return;
+            playersState[myPeerId].dead = true; gameActive = false; 
+            context.fillStyle = 'rgba(255, 13, 114, 0.7)'; context.fillRect(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
+            context.fillStyle = '#fff'; context.font = '2px Arial'; context.fillText("FIN", 4, 10);
+            sendMyUpdate(); 
+        }
+
+        // --- LÓGICA CORE DEL TETRIS ---
+        function arenaSweep() {
+            let rowCount = 0;
+            outer: for (let y = arena.length - 1; y > 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) { if (arena[y][x] === 0) continue outer; }
+                const row = arena.splice(y, 1)[0].fill(0); arena.unshift(row); ++y; rowCount++;
+            }
+            if (rowCount > 0) { const lineScores = [0, 10, 30, 50, 80]; player.score += lineScores[rowCount]; sendMyUpdate(); }
+        }
+
+        function collide(arena, player) {
+            const [m, o] = [player.matrix, player.pos];
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) { if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true; }
+            } return false;
+        }
+
+        function createMatrix(w, h) { const matrix = []; while (h--) matrix.push(new Array(w).fill(0)); return matrix; }
+        function createPiece(type) {
+            if (type === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
+            else if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+            else if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
+            else if (type === 'O') return [[4, 4], [4, 4]];
+            else if (type === 'Z') return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
+            else if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+            else if (type === 'T') return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
+        }
+
+        function draw() {
+            context.fillStyle = '#000'; context.fillRect(0, 0, canvas.width, canvas.height);
+            drawMatrix(arena, {x: 0, y: 0}, context); drawMatrix(player.matrix, player.pos, context);
+        }
+
+        function drawMatrix(matrix, offset, ctx) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) { ctx.fillStyle = colors[value]; ctx.fillRect(x + offset.x, y + offset.y, 1, 1); }
+                });
+            });
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => { if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value; });
+            });
+        }
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+            }
+            if (dir > 0) matrix.forEach(row => row.reverse()); else matrix.reverse();
+        }
+
+        function playerDrop() {
+            if (!gameActive || playersState[myPeerId]?.dead) return;
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--; merge(arena, player); arenaSweep(); playerReset();
+                if(dropCounter > 0) sendMyUpdate(); 
+            }
+            dropCounter = 0;
+        }
+
+        function playerMove(dir) {
+            if (!gameActive || playersState[myPeerId]?.dead) return;
+            player.pos.x += dir;
+            if (collide(arena, player)) player.pos.x -= dir;
+        }
+
+        function playerReset() {
+            const pieces = 'ILJOTSZ';
+            player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+            player.pos.y = 0; player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+            if (collide(arena, player)) myPlayerDied();
+        }
+
+        function playerRotate(dir) {
+            if (!gameActive || playersState[myPeerId]?.dead) return;
+            const pos = player.pos.x; let offset = 1; rotate(player.matrix, dir);
+            while (collide(arena, player)) {
+                player.pos.x += offset; offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.matrix[0].length) { rotate(player.matrix, -dir); player.pos.x = pos; return; }
+            }
+        }
+
+        let dropCounter = 0; let dropInterval = 1000; let lastTime = 0;
+        function update(time = 0) {
+            if (!gameActive) return;
+            const deltaTime = time - lastTime; lastTime = time;
+            dropCounter += deltaTime; if (dropCounter > dropInterval) playerDrop();
+            draw(); requestAnimationFrame(update);
+        }
+
+        const arena = createMatrix(ARENA_WIDTH, ARENA_HEIGHT);
+        const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 };
+
+        document.addEventListener('keydown', event => {
+            if (!gameActive) return;
+            // Evitar mover si el chat está enfocado
+            if(document.activeElement.id === 'chat-input') return;
+            
+            if (event.keyCode === 37) playerMove(-1); else if (event.keyCode === 39) playerMove(1);
+            else if (event.keyCode === 40) playerDrop(); else if (event.keyCode === 38) playerRotate(1);
+        });
+    </script>
+</body>
+</html>
