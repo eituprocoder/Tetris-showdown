@@ -10,38 +10,25 @@
             background: #1a1a22;
             color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
         }
 
         /* --- ESTILOS DEL MENÚ --- */
         #menu-container {
-            background: #2a2a35;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            text-align: center;
-            width: 90%;
-            max-width: 450px;
-            z-index: 10;
-            max-height: 95vh;
-            overflow-y: auto;
+            background: #2a2a35; padding: 20px; border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); text-align: center;
+            width: 90%; max-width: 450px; z-index: 10;
+            max-height: 95vh; overflow-y: auto;
         }
         #menu-container h1 { margin-top: 0; color: #0DFF72; font-size: 32px; text-transform: uppercase; font-style: italic;}
         
-        .profile-section {
-            background: #111; padding: 10px; border-radius: 8px; border: 1px solid #FFE138; margin-bottom: 15px;
-        }
+        .profile-section { background: #111; padding: 10px; border-radius: 8px; border: 1px solid #FFE138; margin-bottom: 15px; }
         .profile-section p { margin: 5px 0; font-weight: bold; color: #FFE138; }
+        .event-text { color: #FF0D72 !important; }
 
         input {
-            width: 100%; padding: 10px; margin: 10px 0;
-            border-radius: 5px; border: 1px solid #555;
+            width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #555;
             background: #111; color: #fff; box-sizing: border-box; font-size: 16px;
         }
         button.action-btn {
@@ -55,6 +42,14 @@
         
         .host-info { margin-top: 10px; color: #FF8E0D; font-weight: bold; white-space: pre-wrap; word-wrap: break-word;}
         #host-waiting-msg { color: #FF0D72; margin-top: 10px; font-weight: bold; font-size: 14px; display: none; }
+
+        /* --- SALAS VISUALES --- */
+        .visual-rooms-container {
+            background: #111; padding: 10px; border-radius: 8px; border: 1px solid #0DC2FF; margin: 15px 0;
+        }
+        .visual-rooms-container h4 { margin: 0 0 10px 0; color: #0DC2FF; }
+        .visual-grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .visual-grid button { width: 30%; background: #2a5ac2; padding: 10px 0;}
 
         /* --- TABLA DE CLASIFICACIÓN --- */
         #leaderboard-section {
@@ -70,21 +65,18 @@
             display: none; width: 100%; height: 100vh;
             flex-direction: row; padding: 20px; box-sizing: border-box; gap: 20px;
         }
-
         #local-player-section { display: flex; flex-direction: column; align-items: center; flex: 0 0 auto; }
         
         #game-info {
-            text-align: center; margin-bottom: 10px; font-size: 18px;
-            color: #FFE138; font-weight: bold; background: rgba(0,0,0,0.5);
-            padding: 8px 15px; border-radius: 5px; text-transform: uppercase; border: 1px solid #FFE138;
+            text-align: center; margin-bottom: 10px; font-size: 18px; color: #FFE138; font-weight: bold;
+            background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 5px; text-transform: uppercase; border: 1px solid #FFE138;
         }
 
         #canvas-container { position: relative; }
         #tetris { border: 4px solid #fff; background-color: #000; height: 65vh; max-height: 600px; }
 
         .controls {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 10px; margin-top: 15px; width: 100%; max-width: 300px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 100%; max-width: 300px;
         }
         .controls button {
             padding: 15px; font-size: 18px; background: #333; color: white;
@@ -95,17 +87,14 @@
 
         /* --- OPONENTES --- */
         #opponents-section {
-            flex: 1 1 auto; background: rgba(255,255,255,0.05);
-            border-radius: 10px; padding: 15px; display: flex;
-            flex-direction: column; overflow: hidden; border: 1px solid #444;
+            flex: 1 1 auto; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px; 
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid #444;
         }
         #opponents-section h3 { margin-top: 0; text-align: center; color: #0DFF72; border-bottom: 1px solid #444; padding-bottom: 10px;}
-        
         #opponents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; overflow-y: auto; padding-right: 5px; }
 
         .opponent-container {
-            background: #2a2a35; border-radius: 8px; padding: 5px;
-            text-align: center; border: 2px solid #444; position: relative; display: flex; flex-direction: column; align-items: center;
+            background: #2a2a35; border-radius: 8px; padding: 5px; text-align: center; border: 2px solid #444; position: relative; display: flex; flex-direction: column; align-items: center;
         }
         .opponent-name { font-size: 12px; font-weight: bold; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
         .opponent-score { font-size: 11px; color: #FFE138; margin-bottom: 3px;}
@@ -122,34 +111,43 @@
 
         /* --- PANTALLA DE VICTORIA --- */
         #winner-screen {
-            display: none; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); background: rgba(0,0,0,0.95);
-            padding: 40px; border-radius: 15px; border: 3px solid #0DFF72;
-            text-align: center; z-index: 100; box-shadow: 0 0 40px rgba(13,255,114,0.4);
-            min-width: 300px;
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); padding: 40px; border-radius: 15px; border: 3px solid #0DFF72;
+            text-align: center; z-index: 100; box-shadow: 0 0 40px rgba(13,255,114,0.4); min-width: 300px;
         }
     </style>
 </head>
 <body>
 
-    <audio id="audio-menu" loop><source src="menu.mp3" type="audio/mpeg"></audio>
-    <audio id="audio-game" loop><source src="game.mp3" type="audio/mpeg"></audio>
-
     <div id="menu-container">
         <h1>Tetris Showdown</h1>
         
         <div class="profile-section">
-            <p>Tus Trofeos de Torneo: <span id="my-trophies-display">0</span> 🏆</p>
+            <p>Trofeos (Torneo): <span id="my-trophies-display">0</span> 🏆</p>
+            <p class="event-text">Tickets de Evento: <span id="event-tickets-display">3</span>/3 🎟️</p>
         </div>
 
         <input type="text" id="username" placeholder="Tu Nombre de Usuario" maxlength="12">
-        
+        <hr style="border-color: #555;">
+
+        <div class="visual-rooms-container">
+            <h4>🌐 Salas Públicas (Automáticas)</h4>
+            <p style="font-size: 11px; color: #aaa; margin-top:-5px;">Si la sala está vacía, serás el Host. Si existe, te unirás.</p>
+            <div class="visual-grid">
+                <button class="action-btn" onclick="joinOrHostVisual('SALA-GLOBAL-1')">SALA 1</button>
+                <button class="action-btn" onclick="joinOrHostVisual('SALA-GLOBAL-2')">SALA 2</button>
+                <button class="action-btn" onclick="joinOrHostVisual('SALA-GLOBAL-3')">SALA 3</button>
+            </div>
+            <div id="visual-status" style="margin-top: 8px; color: #0DFF72; font-size: 13px; font-weight: bold;"></div>
+        </div>
+
         <hr style="border-color: #555;">
         
-        <h3>Crear Sala (Host)</h3>
-        <div style="display: flex; gap: 10px;">
-            <button id="btn-crear-clasico" class="action-btn" style="background:#0DFF72; color:#000;" onclick="hostRoom('classic')">Modo Clásico<br><small>(Máx 100)</small></button>
-            <button id="btn-crear-torneo" class="action-btn" style="background:#FFE138; color:#000;" onclick="hostRoom('tournament')">Modo Torneo 🏆<br><small>(Máx 850)</small></button>
+        <h3>Crear Sala Privada</h3>
+        <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+            <button id="btn-crear-clasico" class="action-btn" style="background:#0DFF72; color:#000; width:48%;" onclick="hostRoom('classic')">Clásico<br><small>(Máx 100)</small></button>
+            <button id="btn-crear-torneo" class="action-btn" style="background:#FFE138; color:#000; width:48%;" onclick="hostRoom('tournament')">Torneo 🏆<br><small>(Máx 850)</small></button>
+            <button id="btn-crear-evento" class="action-btn" style="background:#FF0D72; color:#fff; width:100%;" onclick="hostRoom('event')">🌟 Modo Evento 🎟️<br><small>(Usa 1 Ticket)</small></button>
         </div>
         
         <div id="room-id-display" class="host-info"></div>
@@ -157,15 +155,15 @@
         <button class="action-btn" id="start-game-btn" style="display:none; background:#F538FF; color:#fff; margin-top:10px;" onclick="startGameHost()">▶ ¡Iniciar Ronda!</button>
 
         <div id="leaderboard-section">
-            <h4>🏆 Tabla de Clasificación de la Sala</h4>
+            <h4>🏆 Tabla de la Sala</h4>
             <div id="leaderboard-list"></div>
         </div>
 
         <hr style="border-color: #555; margin-top: 15px;">
         
-        <h3>Unirse a Sala</h3>
-        <input type="text" id="join-id" placeholder="ID de la sala">
-        <button id="btn-unirse-sala" class="action-btn" style="background:#0DC2FF;" onclick="joinRoom()">Conectarse a Partida</button>
+        <h3>Unirse a Sala Privada</h3>
+        <input type="text" id="join-id" placeholder="Ingresa la ID del Host">
+        <button id="btn-unirse-sala" class="action-btn" style="background:#0DC2FF;" onclick="joinRoom()">Conectarse</button>
         <div id="join-status" class="host-info"></div>
     </div>
 
@@ -196,63 +194,104 @@
         <p id="winner-subtext" style="font-size: 18px; color: #fff; margin-bottom: 25px;"></p>
         
         <div id="host-controls" style="display:none;">
-            <div id="host-end-waiting-msg" style="color: #FF8E0D; margin-bottom: 10px; display: none;">No hay suficientes jugadores.</div>
+            <div id="host-end-waiting-msg" style="color: #FF8E0D; margin-bottom: 10px; display: none;">Faltan jugadores.</div>
             <button class="action-btn" id="play-again-btn" style="background: #0DC2FF;" onclick="playAgainHost()">Siguiente Ronda</button>
         </div>
         
         <div id="client-waiting" style="display:none; color: #0DC2FF; margin-bottom: 15px; font-weight: bold;">
-            Esperando a que el Host inicie...
+            Esperando al Host...
         </div>
         
         <button class="action-btn" style="background: #FF0D72; margin-top: 10px;" onclick="location.reload()">Salir al Menú</button>
     </div>
 
     <script>
-        // --- SISTEMA DE TROFEOS Y AUDIO ---
+        // --- SISTEMA DE AUDIO (WEB AUDIO API) ---
+        let audioCtx = null;
+        let musicInterval = null;
+
+        // Tema clásico del juego (Korobeiniki)
+        const melodyGame = [659, 493, 523, 587, 523, 493, 440, 440, 523, 659, 587, 523, 493, 523, 587, 659, 523, 440, 440];
+        // Tema del menú principal (Arpegio suave creado por la IA)
+        const melodyMenu = [329, 392, 440, 523, 440, 392, 329, 261, 329, 392, 440, 392]; 
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playNote(freq, type = 'square') {
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Volumen general
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function startMusic(type) {
+            initAudio();
+            if (musicInterval) clearInterval(musicInterval);
+
+            let melody = type === 'game' ? melodyGame : melodyMenu;
+            let speed = type === 'game' ? 250 : 350;
+            let oscType = type === 'game' ? 'square' : 'triangle';
+            let i = 0;
+
+            playNote(melody[0], oscType); i++; // Tocar la primera nota rápido
+            musicInterval = setInterval(() => {
+                playNote(melody[i % melody.length], oscType);
+                i++;
+            }, speed);
+        }
+
+        // Auto-iniciar música del menú al interactuar con cualquier botón
+        document.body.addEventListener('click', () => {
+            if (!audioCtx) {
+                initAudio();
+                if (!gameActive) startMusic('menu');
+            }
+        });
+
+        // --- SISTEMA DE GUARDADO (TROFEOS Y EVENTO MENSUAL) ---
         let myTrophies = parseInt(localStorage.getItem('tetrisShowdownTrophies')) || 0;
         document.getElementById('my-trophies-display').innerText = myTrophies;
 
-        const bgmMenu = document.getElementById('audio-menu');
-        const bgmGame = document.getElementById('audio-game');
-        let audioStarted = false;
+        let now = new Date();
+        let eventData = JSON.parse(localStorage.getItem('tetrisEventData')) || { month: now.getMonth(), tickets: 3 };
 
-        document.addEventListener('click', () => {
-            if (!audioStarted && !gameActive) {
-                bgmMenu.volume = 0.5; bgmMenu.play().catch(e => console.log("Audio bloqueado temporalmente por navegador"));
-                audioStarted = true;
-            }
-        }, { once: true });
-
-        function startMusic() {
-            bgmMenu.pause(); bgmGame.currentTime = 0; bgmGame.volume = 0.6; 
-            bgmGame.play().catch(e => console.log(e));
+        // Comprobar si cambió el mes para resetear los 3 tickets
+        if (eventData.month !== now.getMonth()) {
+            eventData.month = now.getMonth();
+            eventData.tickets = 3;
+            localStorage.setItem('tetrisEventData', JSON.stringify(eventData));
         }
+        document.getElementById('event-tickets-display').innerText = eventData.tickets;
 
-        function stopMusic() {
-            bgmGame.pause(); bgmMenu.currentTime = 0; 
-            bgmMenu.play().catch(e => console.log(e));
-        }
 
-        // --- VARIABLES GLOBALES ---
+        // --- VARIABLES GLOBALES RED ---
         const ARENA_WIDTH = 12; const ARENA_HEIGHT = 20;
         let peer = null; let connections = []; 
         let isHost = false; let hostConnection = null; 
         
         let myUsername = ""; let gameActive = false;
         let playersState = {}; let myPeerId = null;
-        let currentRoomMode = 'classic'; 
-        let maxPlayers = 100;
+        let currentRoomMode = 'classic'; let maxPlayers = 100;
 
         const canvas = document.getElementById('tetris');
         const context = canvas.getContext('2d');
         context.scale(20, 20);
         const colors = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
 
-        // --- COMPROBADOR DE JUGADORES ---
+        // --- RED Y CONEXIONES (PeerJS) ---
         function checkStartRequirements() {
             if (!isHost) return;
             const playerCount = Object.keys(playersState).length;
-            
             const startBtn = document.getElementById('start-game-btn');
             const waitingMsg = document.getElementById('host-waiting-msg');
             
@@ -272,55 +311,101 @@
             }
         }
 
-        // --- RED Y CONEXIONES (PeerJS) ---
-        function initPeer(callback) {
+        function lockHostButtons() {
+            const btns = document.querySelectorAll('.action-btn');
+            btns.forEach(b => { if(b.id !== 'start-game-btn' && b.id !== 'play-again-btn') b.disabled = true; });
+        }
+
+        // Lógica de Salas Visuales (Públicas)
+        function joinOrHostVisual(fixedId) {
+            lockHostButtons();
+            myUsername = document.getElementById('username').value || "Jugador" + Math.floor(Math.random()*100);
+            const statusBox = document.getElementById('visual-status');
+            statusBox.innerText = "Buscando si existe " + fixedId + "...";
+            
             peer = new Peer();
             peer.on('open', (id) => {
-                myPeerId = id;
-                playersState[id] = { name: myUsername, score: 0, dead: false, arena: createMatrix(ARENA_WIDTH, ARENA_HEIGHT), trophies: myTrophies };
-                callback(id);
+                myPeerId = id; 
+                hostConnection = peer.connect(fixedId, { reliable: true });
+                
+                hostConnection.on('open', () => {
+                    statusBox.innerText = "¡Sala encontrada! Uniéndote...";
+                    document.getElementById('join-status').innerText = "Conectado a la Sala Pública.";
+                    hostConnection.send({ type: 'join', name: myUsername, arena: arena, trophies: myTrophies });
+                });
+                
+                hostConnection.on('data', (data) => handleNetworkData(data, fixedId));
+                hostConnection.on('close', () => { alert("Desconectado de la Sala Pública."); location.reload(); });
             });
-            peer.on('error', (err) => alert("Error de red: " + err.type));
+
+            peer.on('error', (err) => {
+                if (err.type === 'peer-unavailable') {
+                    // La sala no existe, nosotros nos convertimos en el servidor de esta sala pública
+                    statusBox.innerText = "Sala vacía. Creando el servidor...";
+                    peer.destroy(); // Destruimos la conexión temporal
+                    setTimeout(() => hostSpecificRoom(fixedId, 'classic'), 500); // Creamos con el nombre fijo
+                } else {
+                    alert("Error de red: " + err.type); location.reload();
+                }
+            });
         }
 
-        function lockHostButtons() {
-            document.getElementById('btn-crear-clasico').disabled = true;
-            document.getElementById('btn-crear-torneo').disabled = true;
-            document.getElementById('btn-unirse-sala').disabled = true;
+        function hostSpecificRoom(customId, mode) {
+            currentRoomMode = mode; maxPlayers = 100; isHost = true;
+            peer = new Peer(customId); // Creación con ID Fijo
+            setupHostEvents("SALA PÚBLICA:\n" + customId);
         }
 
+        // Lógica de creación manual privada
         function hostRoom(mode) {
+            if (mode === 'event') {
+                if (eventData.tickets <= 0) {
+                    alert("Ya no tienes tickets de evento este mes. ¡Vuelve el próximo mes!");
+                    return;
+                }
+                eventData.tickets--;
+                localStorage.setItem('tetrisEventData', JSON.stringify(eventData));
+                document.getElementById('event-tickets-display').innerText = eventData.tickets;
+            }
+
             lockHostButtons();
             currentRoomMode = mode;
             maxPlayers = mode === 'tournament' ? 850 : 100;
-            
             myUsername = document.getElementById('username').value || "Host";
             isHost = true;
             
-            initPeer((id) => {
-                document.getElementById('room-id-display').innerText = "CÓDIGO DE SALA:\n" + id + "\nModo: " + (mode === 'tournament' ? "TORNEO 🏆" : "CLÁSICO");
+            peer = new Peer();
+            setupHostEvents(null); // ID Aleatorio
+        }
+
+        function setupHostEvents(customText) {
+            peer.on('open', (id) => {
+                myPeerId = id;
+                playersState[id] = { name: myUsername, score: 0, dead: false, arena: createMatrix(ARENA_WIDTH, ARENA_HEIGHT), trophies: myTrophies };
+                
+                let modoText = currentRoomMode === 'tournament' ? "TORNEO 🏆" : (currentRoomMode === 'event' ? "EVENTO 🎟️" : "CLÁSICO");
+                document.getElementById('room-id-display').innerText = customText ? customText : ("CÓDIGO PRIVADO:\n" + id + "\nModo: " + modoText);
                 document.getElementById('leaderboard-section').style.display = "block";
-                checkStartRequirements(); 
-                updateLeaderboardUI();
+                
+                checkStartRequirements(); updateLeaderboardUI();
             });
 
             peer.on('connection', (conn) => {
                 if (Object.keys(playersState).length >= maxPlayers) {
                     conn.send({ type: 'error', msg: 'La sala está llena.' });
-                    setTimeout(() => conn.close(), 1000);
-                    return;
+                    setTimeout(() => conn.close(), 1000); return;
                 }
                 connections.push(conn);
                 conn.on('data', (data) => handleNetworkData(data, conn.peer));
                 conn.on('close', () => {
                     if(playersState[conn.peer]) {
-                        delete playersState[conn.peer];
-                        removeOpponentCanvas(conn.peer);
+                        delete playersState[conn.peer]; removeOpponentCanvas(conn.peer);
                         broadcastState(); checkStartRequirements(); updateLeaderboardUI();
                         if(gameActive) checkWinConditions();
                     }
                 });
             });
+            peer.on('error', (err) => alert("Error: " + err.type));
         }
 
         function joinRoom() {
@@ -330,8 +415,10 @@
             if (!hostId) { alert("Ingresa un código"); location.reload(); return; }
             
             document.getElementById('join-status').innerText = "Conectando al servidor...";
-            initPeer(() => {
-                hostConnection = peer.connect(hostId);
+            peer = new Peer();
+            peer.on('open', (id) => {
+                myPeerId = id;
+                hostConnection = peer.connect(hostId, { reliable: true });
                 hostConnection.on('open', () => {
                     document.getElementById('join-status').innerText = "¡Conectado! Esperando que el Host inicie...";
                     hostConnection.send({ type: 'join', name: myUsername, arena: arena, trophies: myTrophies });
@@ -339,6 +426,7 @@
                 hostConnection.on('data', (data) => handleNetworkData(data, hostId));
                 hostConnection.on('close', () => { alert("Desconectado."); location.reload(); });
             });
+            peer.on('error', (err) => alert("Error: " + err.type));
         }
 
         function handleNetworkData(data, senderId) {
@@ -348,29 +436,22 @@
                     broadcastState(); checkStartRequirements(); updateLeaderboardUI();
                 }
             } else if (data.type === 'state_sync') {
-                playersState = data.state;
-                currentRoomMode = data.mode;
+                playersState = data.state; currentRoomMode = data.mode;
                 document.getElementById('leaderboard-section').style.display = "block";
                 updateOpponentsUI(); updateLeaderboardUI();
             } else if (data.type === 'start_game') {
                 startGameLocal();
             } else if (data.type === 'update_player') {
                 if (playersState[senderId]) {
-                    playersState[senderId].score = data.score;
-                    playersState[senderId].dead = data.dead;
+                    playersState[senderId].score = data.score; playersState[senderId].dead = data.dead;
                     if (data.arena) playersState[senderId].arena = data.arena;
-                    
-                    if (isHost) {
-                        broadcastState(); checkWinConditions();
-                    } else { drawOpponentArena(senderId); }
+                    if (isHost) { broadcastState(); checkWinConditions(); } else { drawOpponentArena(senderId); }
                 }
             } else if (data.type === 'game_over') {
                 if (data.winnerId === myPeerId && currentRoomMode === 'tournament') {
-                    myTrophies++;
-                    localStorage.setItem('tetrisShowdownTrophies', myTrophies);
+                    myTrophies++; localStorage.setItem('tetrisShowdownTrophies', myTrophies);
                     document.getElementById('my-trophies-display').innerText = myTrophies;
-                    playersState[myPeerId].trophies = myTrophies;
-                    sendMyUpdate(); // Avisar al host del nuevo trofeo
+                    playersState[myPeerId].trophies = myTrophies; sendMyUpdate(); 
                 }
                 showWinner(data.winnerText, data.winnerSubtext);
             }
@@ -388,19 +469,14 @@
             if (isHost) {
                 playersState[myPeerId].score = player.score; playersState[myPeerId].arena = arena;
                 broadcastState(); checkWinConditions();
-            } else if (hostConnection && hostConnection.open) {
-                hostConnection.send(myData);
-            }
+            } else if (hostConnection && hostConnection.open) { hostConnection.send(myData); }
         }
 
         function updateLeaderboardUI() {
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = "";
+            const list = document.getElementById('leaderboard-list'); list.innerHTML = "";
             let sortedPlayers = Object.values(playersState).sort((a, b) => b.trophies - a.trophies);
-            
             sortedPlayers.forEach((p, index) => {
-                const item = document.createElement('div');
-                item.className = 'leaderboard-item';
+                const item = document.createElement('div'); item.className = 'leaderboard-item';
                 item.innerHTML = `<span>#${index+1} ${p.name}</span> <span class="gold">${p.trophies} 🏆</span>`;
                 list.appendChild(item);
             });
@@ -423,7 +499,11 @@
             document.getElementById('menu-container').style.display = "none";
             document.getElementById('winner-screen').style.display = "none";
             document.getElementById('game-wrapper').style.display = "flex";
-            document.getElementById('mode-display-game').innerText = currentRoomMode === 'tournament' ? "TORNEO 🏆" : "CLÁSICO";
+            
+            let modoTexto = "CLÁSICO";
+            if(currentRoomMode === 'tournament') modoTexto = "TORNEO 🏆";
+            else if(currentRoomMode === 'event') modoTexto = "EVENTO 🌟";
+            document.getElementById('mode-display-game').innerText = modoTexto;
             
             arena.forEach(row => row.fill(0)); player.score = 0;
             
@@ -433,7 +513,8 @@
             }
             playersState[myPeerId].arena = arena;
             
-            gameActive = true; playerReset(); update(); startMusic();
+            gameActive = true; playerReset(); update(); 
+            startMusic('game'); // CAMBIO A MÚSICA DE PARTIDA
             
             document.getElementById('opponents-grid').innerHTML = ""; updateOpponentsUI(); sendMyUpdate();
         }
@@ -442,7 +523,6 @@
         function updateOpponentsUI() {
             const aliveCount = Object.values(playersState).filter(p => !p.dead).length;
             document.getElementById('player-count').innerText = aliveCount + " Vivos";
-
             for (let id in playersState) {
                 if (id === myPeerId) continue;
                 createOpponentCanvasIfMissing(id); drawOpponentArena(id);
@@ -451,9 +531,7 @@
 
         function createOpponentCanvasIfMissing(id) {
             if (document.getElementById('opp-container-' + id)) return;
-            const grid = document.getElementById('opponents-grid');
-            const p = playersState[id];
-
+            const grid = document.getElementById('opponents-grid'); const p = playersState[id];
             const container = document.createElement('div'); container.id = 'opp-container-' + id; container.className = 'opponent-container';
             const nameEl = document.createElement('div'); nameEl.className = 'opponent-name'; nameEl.innerText = p.name;
             const scoreEl = document.createElement('div'); scoreEl.className = 'opponent-score'; scoreEl.id = 'opp-score-' + id; scoreEl.innerText = "Pts: 0";
@@ -471,7 +549,6 @@
         function drawOpponentArena(id) {
             const p = playersState[id]; const canvasOpp = document.getElementById('opp-canvas-' + id);
             const container = document.getElementById('opp-container-' + id); const scoreEl = document.getElementById('opp-score-' + id);
-            
             if (!canvasOpp || !p || !p.arena) return;
 
             const ctxOpp = canvasOpp.getContext('2d'); scoreEl.innerText = "Pts: " + p.score;
@@ -509,23 +586,18 @@
 
         function endGameForAll(text, subtext, winnerId) {
             gameActive = false;
-            
             if (winnerId === myPeerId && currentRoomMode === 'tournament') {
-                myTrophies++;
-                localStorage.setItem('tetrisShowdownTrophies', myTrophies);
+                myTrophies++; localStorage.setItem('tetrisShowdownTrophies', myTrophies);
                 document.getElementById('my-trophies-display').innerText = myTrophies;
-                playersState[myPeerId].trophies = myTrophies;
-                updateLeaderboardUI();
+                playersState[myPeerId].trophies = myTrophies; updateLeaderboardUI();
             }
-
             showWinner(text, subtext);
-            connections.forEach(conn => {
-                conn.send({ type: 'game_over', winnerText: text, winnerSubtext: subtext, winnerId: winnerId });
-            });
+            connections.forEach(conn => { conn.send({ type: 'game_over', winnerText: text, winnerSubtext: subtext, winnerId: winnerId }); });
         }
 
         function showWinner(text, subtext = "") {
-            gameActive = false; stopMusic(); 
+            gameActive = false; 
+            startMusic('menu'); // VUELVE A LA MÚSICA DEL MENÚ
             
             document.getElementById('winner-screen').style.display = "block";
             document.getElementById('winner-text').innerText = text;
@@ -542,10 +614,8 @@
         function myPlayerDied() {
             if (!gameActive || playersState[myPeerId].dead) return;
             playersState[myPeerId].dead = true; gameActive = false; 
-            
             context.fillStyle = 'rgba(255, 13, 114, 0.7)'; context.fillRect(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
             context.fillStyle = '#fff'; context.font = '2px Arial'; context.fillText("FIN", 4, 10);
-            
             sendMyUpdate(); 
         }
 
@@ -556,19 +626,14 @@
                 for (let x = 0; x < arena[y].length; ++x) { if (arena[y][x] === 0) continue outer; }
                 const row = arena.splice(y, 1)[0].fill(0); arena.unshift(row); ++y; rowCount++;
             }
-            if (rowCount > 0) {
-                const lineScores = [0, 10, 30, 50, 80]; player.score += lineScores[rowCount]; sendMyUpdate(); 
-            }
+            if (rowCount > 0) { const lineScores = [0, 10, 30, 50, 80]; player.score += lineScores[rowCount]; sendMyUpdate(); }
         }
 
         function collide(arena, player) {
             const [m, o] = [player.matrix, player.pos];
             for (let y = 0; y < m.length; ++y) {
-                for (let x = 0; x < m[y].length; ++x) {
-                    if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
-                }
-            }
-            return false;
+                for (let x = 0; x < m[y].length; ++x) { if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true; }
+            } return false;
         }
 
         function createMatrix(w, h) { const matrix = []; while (h--) matrix.push(new Array(w).fill(0)); return matrix; }
@@ -591,9 +656,7 @@
         function drawMatrix(matrix, offset, ctx) {
             matrix.forEach((row, y) => {
                 row.forEach((value, x) => {
-                    if (value !== 0) {
-                        ctx.fillStyle = colors[value]; ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
-                    }
+                    if (value !== 0) { ctx.fillStyle = colors[value]; ctx.fillRect(x + offset.x, y + offset.y, 1, 1); }
                 });
             });
         }
